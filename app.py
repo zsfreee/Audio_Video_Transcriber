@@ -1262,6 +1262,35 @@ def process_vk_video(url, save_path, target_language, save_txt=True, save_docx=T
         st.session_state.process_completed = True
         return transcription, None, None
 
+# --- Аутентификация по паролю через Streamlit secrets ---
+def check_password():
+    """Returns True if the user entered the correct password."""
+    if "password_correct" in st.session_state:
+        return st.session_state.password_correct
+    import hmac
+    def password_entered():
+        """Checks whether a password entered by the user is correct."""
+        if hmac.compare_digest(st.session_state.password, st.secrets.get("PASSWORD", "default_password")):
+            st.session_state.password_correct = True
+            del st.session_state.password  # Не храним пароль в сессии
+        else:
+            st.session_state.password_correct = False
+    st.text_input(
+        "Введите пароль для доступа к приложению", 
+        type="password",
+        key="password",
+        on_change=password_entered
+    )
+    if "password_correct" in st.session_state:
+        if not st.session_state.password_correct:
+            st.error("😕 Неверный пароль")
+            return False
+    return False
+
+# Если пароль неверный, остановить выполнение приложения
+if not check_password():
+    st.stop()
+
 # Основная функция приложения
 def main():
     st.title("🎤 Транскрибатор аудио и видео")
