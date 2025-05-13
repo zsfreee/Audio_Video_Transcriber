@@ -34,7 +34,7 @@ from utils import (
     transcribe_audio_whisper, audio_info,
     format_text, split_markdown_text, process_documents,
     num_tokens_from_string, split_text, process_text_chunks,
-    save_text_to_docx, markdown_to_docx
+    save_text_to_docx, markdown_to_docx, setup_ffmpeg_path
 )
 from youtube_service import YouTubeDownloader
 from gdrive_service import GoogleDriveDownloader
@@ -64,26 +64,12 @@ MARKDOWN_DIR = os.path.join(TEMP_DIR, "markdown")  # Для хранения mar
 for dir_path in [TRANSCRIPTIONS_DIR, TEMP_FILES_DIR, AUDIO_FILES_DIR, MARKDOWN_DIR]:
     os.makedirs(dir_path, exist_ok=True)
 
-# Определяем путь к ffmpeg и добавляем его в переменные окружения
-current_dir = os.path.dirname(os.path.abspath(__file__))
-ffmpeg_bin = os.path.join(current_dir, "ffmpeg.exe")
-ffprobe_bin = os.path.join(current_dir, "ffprobe.exe")
-
-# Проверяем существование файлов FFmpeg
-if not os.path.exists(ffmpeg_bin) or not os.path.exists(ffprobe_bin):
-    st.error("FFmpeg файлы не найдены в директории проекта. Пожалуйста, убедитесь, что ffmpeg.exe и ffprobe.exe находятся в корневой директории проекта.")
-    st.stop()
-
 # Устанавливаем переменные окружения для FFmpeg
-os.environ["FFMPEG_BINARY"] = ffmpeg_bin
-os.environ["FFPROBE_BINARY"] = ffprobe_bin
-
-# Добавляем текущую директорию в PATH для поиска DLL файлов
-os.environ["PATH"] = current_dir + os.pathsep + os.environ.get("PATH", "")
+setup_ffmpeg_path()
 
 # Проверяем работоспособность FFmpeg
 try:
-    subprocess.run([ffmpeg_bin, "-version"], capture_output=True, text=True, check=True)
+    subprocess.run([os.environ["FFMPEG_BINARY"], "-version"], capture_output=True, text=True, check=True)
     st.sidebar.success("FFmpeg успешно инициализирован")
 except Exception as e:
     st.sidebar.error(f"Ошибка при инициализации FFmpeg: {str(e)}")
